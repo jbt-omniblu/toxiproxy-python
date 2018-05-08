@@ -10,6 +10,11 @@ from .utils import can_connect_to
 class Toxiproxy(object):
     """ Represents a Toxiproxy server """
 
+    def __init__(self, **kwargs):
+        host = kwargs.get('host') or APIConsumer.host
+        port = kwargs.get('port') or APIConsumer.port
+        self.update_api_consumer(host, int(port))
+
     def proxies(self):
         """ Returns all the proxies registered in the server """
 
@@ -109,7 +114,6 @@ class Toxiproxy(object):
                 populated_proxies.append(proxy_instance)
 
         return populated_proxies
-
 
     def update_api_consumer(self, host, port):
         """ Update the APIConsumer host and port """
