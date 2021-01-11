@@ -70,6 +70,26 @@ class Proxy(object):
 
         APIConsumer.post("/proxies/%s/toxics" % self.name, json=json).json()
 
+    def edit_toxic(self, **kwargs):
+        """ Edit an existing toxic """
+
+        toxic_type = kwargs["type"]
+        stream = kwargs["stream"] if "stream" in kwargs else "downstream"
+        name = kwargs["name"] if "name" in kwargs else "%s_%s" % (toxic_type, stream)
+        toxicity = kwargs["toxicity"] if "toxicity" in kwargs else 1.0
+        attributes = kwargs["attributes"] if "attributes" in kwargs else {}
+
+        # Lets build a dictionary to send the data to create the Toxic
+        json = {
+            "name": name,
+            "type": toxic_type,
+            "stream": stream,
+            "toxicity": toxicity,
+            "attributes": attributes
+        }
+
+        APIConsumer.post("/proxies/{}/toxics/{}".format(self.name, name), json=json).json()
+
     def destroy_toxic(self, toxic_name):
         """ Destroy the given toxic """
 
