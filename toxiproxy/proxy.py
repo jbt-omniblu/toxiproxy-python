@@ -1,6 +1,9 @@
 # coding: utf-8
 
 from contextlib import contextmanager
+from typing import Optional, Union
+import threading
+import time
 
 from .api import APIConsumer
 from .toxic import Toxic
@@ -15,6 +18,12 @@ class Proxy(object):
         self.upstream = kwargs["upstream"]
         self.enabled = kwargs["enabled"]
         self.listen = kwargs["listen"]
+
+    def get_listen_host(self):
+        return self.listen.rsplit(':', 1)[0]
+
+    def get_listen_port(self):
+        return self.listen.rsplit(':', 1)[1]
 
     @contextmanager
     def down(self):
@@ -126,3 +135,63 @@ class Proxy(object):
 
         APIConsumer.post("/proxies/%s" % self.name, json=json).json()
         self.enabled = enabled
+
+    # Latency toxic
+    def add_latency_toxic(self, latency: int, jitter: int = 0,
+                          stream: str = 'downstream', name: Optional[str] = None,
+                          toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'latency': latency, 'jitter': jitter}
+        name = name or f'latency_{stream}'
+        self.add_toxic(type='latency', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Bandwidth toxic
+    def add_bandwidth_toxic(self, rate: int,
+                            stream: str = 'downstream', name: Optional[str] = None,
+                            toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'rate': rate}
+        name = name or f'bandwidth_{stream}'
+        self.add_toxic(type='bandwidth', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Slicer toxic
+    def add_slicer_toxic(self, average_size: int, size_variation: int = 0,
+                         stream: str = 'downstream', name: Optional[str] = None,
+                         toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'average_size': average_size, 'size_variation': size_variation}
+        name = name or f'slicer_{stream}'
+        self.add_toxic(type='slicer', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Slow close toxic
+    def add_slow_close_toxic(self, delay: int,
+                             stream: str = 'downstream', name: Optional[str] = None,
+                             toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'delay': delay}
+        name = name or f'slow_close_{stream}'
+        self.add_toxic(type='slow_close', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Timeout toxic
+    def add_timeout_toxic(self, timeout: int,
+                          stream: str = 'downstream', name: Optional[str] = None,
+                          toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'timeout': timeout}
+        name = name or f'timeout_{stream}'
+        self.add_toxic(type='timeout', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Limit data toxic
+    def add_limit_data_toxic(self, bytes: int,
+                             stream: str = 'downstream', name: Optional[str] = None,
+                             toxicity: Union[int, float] = 1.0) -> str:
+        attributes = {'bytes': bytes}
+        name = name or f'limit_data_{stream}'
+        self.add_toxic(type='limit_data', stream=stream, name=name, toxicity=toxicity, attributes=attributes)
+        return name
+
+    # Destroy toxic by name after waiting for specified duration
+    def destroy_toxic_after_delay(self, name: str, seconds: float) -> threading.Thread:
+        thread = threading.Thread(target=lambda: time.sleep(seconds) or self.destroy_toxic(name))
+        thread.start()
+        return thread

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 NAME = "toxiproxy"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 DESCRIPTION = "Python library for Toxiproxy"
 LONG_DESCRIPTION = """\
 A Python library for controlling Toxiproxy. Can be used in resiliency testing."""
